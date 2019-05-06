@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Matriz de Memoria</title>
+    <style>
+        canvas { /* Centraliza o canvas na tela do browser */
+            position: absolute;
+            top: 0px;
+            bottom: 0px;
+            left: 0px;
+            right: 0px;
+            margin: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <script type="text/javascript">
+
+        // Variáveis Globais
+        var canvas,   // Tela em que é apresentado o jogo
+            ctx,      // Pincel que desenha os elementos do jogo
+            ALTURA,   // Altura da tela do browser
+            LARGURA,  // Largura da tela do browser
+
+        limiteMatriz = {
+            x: 0,
+            y: 0,
+            altura: 0,
+            largura: 0,
+
+            desenha: function () {
+                this.x = LARGURA / 20;
+                this.y = ALTURA / 7;
+                this.altura = 480;
+                this.largura = 720
+                ctx.strokeRect(this.x, this.y, this.largura, this.altura);
+            }
+        },
+
+        matriz = { // Matriz onde são apresentados os quadrados clicáveis
+                x: 0,
+                y: 0,
+                altura: 0,
+                largura: 0,
+                cor: "#fff",
+                qtdQuadrados: 9,
+                quadradinhos: [],
+
+
+                desenha: function () {
+                    var ajuste = 50; // Ajuste que permite a matriz ficar quadrada e centralizada no Canvas
+
+                    this.altura = (limiteMatriz.altura/2)+ajuste;
+                    this.largura = (limiteMatriz.largura/2)-ajuste;
+                    this.x = ((limiteMatriz.x + this.largura)/2)+ajuste+20;
+                    this.y = ((limiteMatriz.y + this.altura)/2);
+                    ctx.fillStyle = this.cor;
+                    ctx.fillRect(this.x, this.y, this.largura, this.altura);
+                },
+
+                insere: function () {
+
+                    var quad = new quadradin(matriz.x, matriz.y, (matriz.altura / 4) - 15, (matriz.largura / 4) - 15);
+                    var quad2 = new quadradin(quad.getX()+62, quad.getY(), (matriz.altura / 4) - 15, (matriz.largura / 4) - 15);
+                    var quad3 = new quadradin(quad2.getX()+62, quad2.getY(), (matriz.altura / 4) - 15, (matriz.largura / 4) - 15);
+                    var quad4 = new quadradin(quad3.getX()+62, quad3.getY(), (matriz.altura / 4) - 15, (matriz.largura / 4) - 15);
+                    var quad5 = new quadradin(quad4.getX()+62, quad4.getY(), (matriz.altura / 4) - 15, (matriz.largura / 4) - 15);
+
+                    quad.desenha();
+                    quad2.setCor("red");
+                    quad2.desenha();
+                    quad3.setCor("blue");
+                    quad3.desenha();
+                    quad4.setCor("green");
+                    quad4.desenha();
+                    quad5.setCor("yellow");
+                    quad5.desenha();
+
+                    /*var quad2 = new quadradin((matriz.largura) + 10, (matriz.altura + 50) + 5, (matriz.altura / 4) - 15, (matriz.largura / 4) - 15);
+                    var quad3 = new quadradin((matriz.largura - 100) + 15, (matriz.altura + 50) + 5, (matriz.altura / 4) - 15, (matriz.largura / 4) - 15);
+                    var quad4 = new quadradin((matriz.largura - 200) + 20, (matriz.altura + 50) + 5, (matriz.altura / 4) - 15, (matriz.largura / 4) - 15);
+
+                    var quad5 = new quadradin((matriz.largura - 200) + 20, (matriz.altura - 50) + 10, (matriz.altura / 4) - 15, (matriz.largura / 4) - 15);
+                    var quad6 = new quadradin((matriz.largura - 200) + 20, (matriz.altura - 150) + 15, (matriz.altura / 4) - 15, (matriz.largura / 4) - 15);
+                    var quad7 = new quadradin((matriz.largura - 200) + 20, (matriz.altura - 250) + 20, (matriz.altura / 4) - 15, (matriz.largura / 4) - 15);
+
+                    quad.desenha();
+                    quad2.setCor("red");
+                    quad2.desenha();
+                    quad3.setCor("blue");
+                    quad3.desenha();
+                    quad4.setCor("green");
+                    quad4.desenha();
+
+                    quad5.setCor("yellow");
+                    quad5.desenha();
+                    quad6.setCor("purple");
+                    quad6.desenha();
+                    quad7.setCor("gray");
+                    quad7.desenha();*/
+
+
+                    //this.quadradinhos.push(quad);
+                }
+            }
+
+        function quadradin(x, y, altura, largura) {
+            var _x = x,
+                _y = y,
+                _altura = altura,
+                _largura = largura;
+            _cor = "#423433";
+
+            this.setCor = function (cor) {
+                _cor = cor;
+            }
+
+            this.getX = function() {
+                return _x;
+            }
+
+            this.getY = function () {
+                return _y;
+            }
+
+            this.desenha = function () {
+                ctx.fillStyle = _cor;
+                ctx.fillRect(_x, _y, _largura, _altura);
+            }
+        }
+
+        /*quadradinho = {
+            x: 0,
+            y: 0,
+            altura: 0,
+            largura: 0,
+            cor: "#423433",
+
+            desenha: function () {
+                this.x = matriz.largura + 100;
+                this.y = matriz.altura + 50;
+                this.altura = matriz.altura / 4
+                this.largura = matriz.largura / 4
+                ctx.fillStyle = this.cor;
+                ctx.fillRect(this.x, this.y, this.largura, this.altura);
+            }
+        };*/
+
+        function main() {
+            ALTURA = window.innerHeight; // Captura a altura da tela do browser
+            LARGURA = window.innerWidth; // Captura a largura da tela do browser
+
+            if (LARGURA > 500) {
+                LARGURA = 800;
+                ALTURA = 600;
+            }
+
+            canvas = document.createElement("canvas"); // Cria um elemento de tag 'canvas' em HTML
+            canvas.height = ALTURA;
+            canvas.width = LARGURA;
+            canvas.style.border = "1px solid #000";
+
+            ctx = canvas.getContext("2d"); // Tudo o que é desenhado no Canvas, por meio de 'ctx', é um elemento 2D
+            document.body.appendChild(canvas); // Adiciona o elemento ao corpo HTML
+
+            rodarJogo();
+
+        }
+
+        function rodarJogo() {
+            desenha();
+        }
+
+        function sleep(milliseconds) {
+            var start = new Date().getTime();
+            for (var i = 0; i < 1e7; i++) {
+                if ((new Date().getTime() - start) > milliseconds)
+                    break;
+            }
+        }
+
+        function desenha() {
+            fundo_canvas = "img/brown_texture.jpg"
+            canvas.style.backgroundImage = "url(" + fundo_canvas + ")";
+
+            limiteMatriz.desenha();
+            matriz.desenha();
+            matriz.insere();
+            //matriz.quadradinhos[0].desenha();
+            ctx.moveTo(limiteMatriz.x + 360, limiteMatriz.y);
+            ctx.lineTo(limiteMatriz.x + 360, limiteMatriz.y + 480);
+            ctx.stroke();
+            ctx.moveTo(limiteMatriz.x, limiteMatriz.y+240);
+            ctx.lineTo(limiteMatriz.x + 720, limiteMatriz.y + 240);
+            ctx.stroke();
+            console.log("oi");
+        }
+
+        main();
+    </script>
+
+</body>
+
+</html>
