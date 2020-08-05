@@ -27,7 +27,19 @@
             ctx,      // Pincel que desenha os elementos do jogo.
             ALTURA,   // Altura da tela do browser.
             LARGURA,  // Largura da tela do browser.
-            global_level = 5,    // Nível de dificuldade do jogo.
+            global_level = 0,    // Nível de dificuldade do jogo.
+            score = 0,
+            tentativas = 0,
+
+            estados = {
+                errado: 0,
+                certo: 1
+            },
+
+            mouse = {
+                naoClicado: 0,
+                Clicado: 1
+            },
 
             // Objeto que serve de limite até onde a matriz pode crescer.
             limiteMatriz = {
@@ -37,10 +49,10 @@
                 largura: 0,
 
                 desenha: function () {
-                    this.x = LARGURA / 20;
-                    this.y = ALTURA / 7;
-                    this.altura = 480;
-                    this.largura = 720
+                    this.x = LARGURA / 15;
+                    this.y = ALTURA / 6;
+                    this.altura = 480 - 25;
+                    this.largura = 720 - 25;
                     ctx.strokeRect(this.x, this.y, this.largura, this.altura);
                 }
             },
@@ -52,78 +64,178 @@
                 altura: 0,
                 largura: 0,
                 cor: "#fff",
-                qtdQuadradinhosEmLinha: 0,  // Quantidade de quadrados desenhados em uma linha.
-                arrQuadradinhos: [],        // Array de quadrados (elementos) da matriz.
-                i: 3,   // Número de Linhas da Matriz.
-                j: 3,   // Número de Colunas da Matriz.
+                arrQuadradinhos: [],  // Array de quadrados (elementos) da matriz.
+                linhas: 3,   // Número de Linhas da Matriz.
+                colunas: 3,   // Número de Colunas da Matriz.
+                ultimaLinha: 8,  // Última linha que ficará na matriz (limite de linhas)
                 nivel: 0, // Nível de complexidade da matriz
-
+                qtdQuadradinhosEmLinha: 0,  // Quantidade de quadrados desenhados em uma linha.
+                qtdQuadradinhosCertos: 0,   // Quantidade de quadrados que o jogador deverá clicar para acertar o desafio.
+                qtdQuadradinhosAcertados: 0,   // Quantidade de quadrados que o jogador acertou.
+ 
                 // Método que desenha a matriz no Canvas.
                 desenha: function () {
-                    var ajuste = 50; // Ajuste que permite a matriz ficar quadrada (1:1) e centralizada no Canvas.
+                    //ctx.translate();
+                    let ajuste = 45; // Ajuste que permite a matriz ficar quadrada (1:1) e centralizada no Canvas.
 
-                    this.altura = (limiteMatriz.altura / 2) + ajuste;
-                    this.largura = (limiteMatriz.largura / 2) - ajuste;
-                    this.x = ((limiteMatriz.x + this.largura) / 2) + ajuste + 18;
-                    this.y = ((limiteMatriz.y + this.altura) / 2) - 7;
+                    this.altura = (limiteMatriz.altura / 1.1) + ajuste;
+                    this.largura = (limiteMatriz.largura / 0.945) - ajuste;
+                    this.x = ((limiteMatriz.x) + 2); //+ this.largura) / 2) + ajuste + 18; // O numeral é a precisão em pixel onde o objeto ficará posicionado, quanto maior, mais à direita
+                    this.y = ((limiteMatriz.y)); //+ this.altura) / 2) - 10; // Quanto menor, mais acima o objeto ficará posicionado
                     ctx.fillStyle = this.cor;
                     ctx.fillRect(this.x, this.y, this.largura, this.altura);
+
+                    if (this.arrQuadradinhos.length > 0) {
+                        for (let i = 0; i < this.arrQuadradinhos.length; i++) {
+                            this.arrQuadradinhos[i].desenha();
+                        }
+                    }
                 },
 
                 // Método que insere quadradinhos (elementos) na matriz.
                 insere: function () {
 
+                    let ajuste = 50;      // Ajuste do tamanho do elemento
+                    let quadAltura = ((limiteMatriz.altura / 2 + ajuste) / 4) - 15;   // Altura do elemento.
+                    let quadLargura = ((limiteMatriz.largura / 2 - ajuste) / 4) - 15;  // Largura do elemento.
                     let espacamento = 55; // Espaçamento em pixels entre os quadrados que são desenhados.
 
+                    let primeiraPosX = 270;
+                    let primeiraPosY = 150;
+
+                    if (this.colunas <= this.ultimaLinha) {
+                        primeiraPosX -= 30 * (this.linhas - 3);
+                        primeiraPosY -= 30 * (this.colunas - 3);
+                    }
+                    else {
+                        primeiraPosX -= 30 * (this.colunas - 3);
+                        primeiraPosY -= 30 * (this.linhas - 3);
+                        for (let i = this.ultimaLinha; i < this.colunas; i++) {
+                            primeiraPosX -= 10;
+                        }
+                    }
+
                     if (!(this.arrQuadradinhos.length)) { // Se a matriz estiver vazia, adiciona o primeiro elemento.
-                        var quad = new quadradinho(this.x, this.y, (this.altura / 4) - 15, (this.largura / 4) - 15);
+                        var quad = new quadradinho(this.x + primeiraPosX, this.y + primeiraPosY, quadAltura, quadLargura);
                         this.arrQuadradinhos.push(quad);
                         this.qtdQuadradinhosEmLinha++;
                     }
 
                     else { // Senão, adiciona os próximos elementos.
-                        /*  Verifica se a quantidade de quadrados desenhados em linha é diferente
-                        *   da raiz quadrada do limite total de elementos da matriz (linhas x colunas). */
-                        if (this.qtdQuadradinhosEmLinha !== Math.floor(Math.sqrt(this.i * this.j))) {
-                            /*  Adiciona um novo quadradinho à matriz, usando com base os dados do último quadradinho da matriz
-                            *   para posicioná-lo corretamente na grade. */
-                            var quad = new quadradinho(this.arrQuadradinhos[this.arrQuadradinhos.length - 1].getX() + (espacamento + 8), this.arrQuadradinhos[this.arrQuadradinhos.length - 1].getY(), (this.altura / 4) - 15, (this.largura / 4) - 15);
-                            quad.setCor("#b" + Math.floor(Math.random() * 100 + 1).toString());
-                            this.arrQuadradinhos.push(quad);
-                            this.qtdQuadradinhosEmLinha++;
+                        if (this.colunas <= this.ultimaLinha) {
+                            /*  Verifica se a quantidade de quadrados desenhados em linha é diferente
+                            *   da raiz quadrada do limite total de elementos da matriz (linhas x colunas). */
+                            if (this.qtdQuadradinhosEmLinha !== Math.floor(Math.sqrt(this.linhas * this.colunas))) {
+                                /*  Adiciona um novo quadradinho à matriz, usando com base os dados do último quadradinho da matriz
+                                *   para posicioná-lo corretamente na grade. */
+                                var quad = new quadradinho(this.arrQuadradinhos[this.arrQuadradinhos.length - 1].getX() + (espacamento + 8), this.arrQuadradinhos[this.arrQuadradinhos.length - 1].getY(), quadAltura, quadLargura);
+                                this.arrQuadradinhos.push(quad);
+                                this.qtdQuadradinhosEmLinha++;
+                            }
+
+                            else {
+                                /*  Se a quantidade de quadrados é igual à raiz quadrada do limite de elementos,
+                                *   ocorre uma quebra de linha e o novo quadradinho é posicionado no início do eixo X. */
+                                var quad = new quadradinho(this.x + primeiraPosX, this.arrQuadradinhos[this.arrQuadradinhos.length - 1].getY() + (espacamento + 3), quadAltura, quadLargura);
+                                this.arrQuadradinhos.push(quad);
+                                this.qtdQuadradinhosEmLinha = 1;
+                            }
                         }
 
-                        /*  Se a quantidade de quadrados é igual à raiz quadrada do limite de elementos,
-                        *   ocorre uma quebra de linha e o novo quadradinho é posicionado no início do eixo X. */
+                        // A partir da oitava coluna, os elementos são inseridos horizontalmente, ao inves de haver a quebra de linha.
                         else {
-                            var quad = new quadradinho(this.x, this.arrQuadradinhos[this.arrQuadradinhos.length - 1].getY() + (espacamento + 3), (this.altura / 4) - 15, (this.largura / 4) - 15);
-                            this.arrQuadradinhos.push(quad);
-                            this.qtdQuadradinhosEmLinha = 1;
+                            if (this.qtdQuadradinhosEmLinha !== this.colunas) {
+                                /*  Adiciona um novo quadradinho à matriz, usando com base os dados do último quadradinho da matriz
+                                *   para posicioná-lo corretamente na grade. */
+                                var quad = new quadradinho(this.arrQuadradinhos[this.arrQuadradinhos.length - 1].getX() + (espacamento + 8), this.arrQuadradinhos[this.arrQuadradinhos.length - 1].getY(), quadAltura, quadLargura);
+                                this.arrQuadradinhos.push(quad);
+                                this.qtdQuadradinhosEmLinha++;
+                            }
+                            else {
+                                var quad = new quadradinho(this.x + primeiraPosX, this.arrQuadradinhos[this.arrQuadradinhos.length - 1].getY() + (espacamento + 3), quadAltura, quadLargura);
+                                this.arrQuadradinhos.push(quad);
+                                this.qtdQuadradinhosEmLinha = 1;
+                            }
                         }
                     }
 
-                    this.arrQuadradinhos[this.arrQuadradinhos.length - 1].desenha(); // Desenha o quadradinho na matriz do Canvas
+                    // this.arrQuadradinhos[this.arrQuadradinhos.length - 1].desenha(); // Desenha o quadradinho na matriz do Canvas
+                },
+
+                sorteia: function() {
+                    var quadradinhosCorretosNaMatriz = Math.floor((this.linhas * this.colunas) / 3);
+                    var indicesDesordenados = [];
+                    var limite = this.linhas * this.colunas;
+
+                    this.qtdQuadradinhosCertos = 0;
+                    
+                    // Sorteia números que não se repetem para servirem de índices não-ordenados para os próximos laços.
+                    while (indicesDesordenados.length < limite) {
+                        let num = Math.floor(Math.random() * (limite));
+                        while (indicesDesordenados.indexOf(num) >= 0) {  // Enquanto o numero já existir, escolher outro
+                            num = Math.floor(Math.random() * (limite));
+                        }
+                        indicesDesordenados.push(num);
+                    }
+
+                    while (this.qtdQuadradinhosCertos < quadradinhosCorretosNaMatriz) {
+                        for (let i = 0; i < this.arrQuadradinhos.length; i++) {
+                            let desordIndex = indicesDesordenados[i];
+                            if (this.qtdQuadradinhosCertos < quadradinhosCorretosNaMatriz) {
+                                if (this.arrQuadradinhos[desordIndex].getEstado() === estados.errado) {
+                                    this.arrQuadradinhos[desordIndex].setEstado(Math.floor(Math.random() * 2));
+                                    if (this.arrQuadradinhos[desordIndex].getEstado() === estados.certo) {
+                                        this.arrQuadradinhos[desordIndex].setCor("blue");
+                                        this.arrQuadradinhos[desordIndex].desenha();
+                                        this.qtdQuadradinhosCertos++;
+                                    }
+                                }
+                            }
+                            else {
+                                break;
+                            }
+                        }
+                    }
+
+                    window.setTimeout(function() {
+                        matriz.arrQuadradinhos.forEach(element => {
+                            if (element.getEstado() === estados.certo) {
+                                element.setCor("#423433");
+                                element.desenha();
+                            }
+                        });
+                    }, 2000 ); // Tempo em milissegundos até que a função seja executada.
                 },
 
                 // Método que eleva um nível na matriz
                 proximoNivel: function () {
-                    if (this.i === this.j) {
-                        this.i++;
+                    if (this.colunas === this.linhas || this.colunas > this.ultimaLinha) {
+                        this.colunas++;
                     }
                     else {
-                        this.j = this.i;
+                        this.linhas = this.colunas;
                     }
+                    this.qtdQuadradinhosCertos = Math.floor((this.linhas * this.colunas) / 3);
+                    this.arrQuadradinhos = [];
+                    this.qtdQuadradinhosAcertados = 0;
+                    this.qtdQuadradinhosEmLinha = 0;
                     this.nivel++;
                 }
             }
-        
+
         // Classe de Quadradinhos que servem de elementos para a matriz.
         function quadradinho(x, y, altura, largura) {
             var _x = x,
                 _y = y,
                 _altura = altura,
                 _largura = largura;
-            _cor = "#423433";
+            var _cor = "#423433";
+            var _foiClicado = mouse.naoClicado;
+            var _estado = estados.errado;
+
+            this.getCor = function () {
+                return _cor;
+            }
 
             this.setCor = function (cor) {
                 _cor = cor;
@@ -145,28 +257,128 @@
                 return _largura
             }
 
+            this.getFoiClicado = function () {
+                return _foiClicado
+            }
+
+            this.setFoiClicado = function (novoEstadoMouse) {
+                _foiClicado = novoEstadoMouse;
+            }
+
+            this.getEstado = function () {
+                return _estado
+            }
+
+            this.setEstado = function (novoEstado) {
+                _estado = novoEstado;
+            }
+
             this.desenha = function () { // Método que desenha o quadradinho no Canvas.
                 ctx.fillStyle = _cor;
                 ctx.fillRect(_x, _y, _largura, _altura);
             }
         }
 
-        /*quadradinho = {
-            x: 0,
-            y: 0,
-            altura: 0,
-            largura: 0,
-            cor: "#423433",
-
-            desenha: function () {
-                this.x = matriz.largura + 100;
-                this.y = matriz.altura + 50;
-                this.altura = matriz.altura / 4
-                this.largura = matriz.largura / 4
-                ctx.fillStyle = this.cor;
-                ctx.fillRect(this.x, this.y, this.largura, this.altura);
+        function colisao(rectX, rectY, rectLargura, rectAltura, mouseX, mouseY) {
+            if (((rectX <= mouseX) && (rectX + rectLargura >= mouseX))
+                &&
+                ((rectY <= mouseY) && (rectY + rectAltura >= mouseY))) {
+                return true;
             }
-        };*/
+            else {
+                return false;
+            }
+        }
+
+        window.onmousemove = function () {
+            var canv = canvas.getBoundingClientRect();
+            var posX = event.clientX - canv.left;
+            var posY = event.clientY - canv.top;
+
+            if (posX > 0 && posX < canv.width) { // Cursor dentro do canvas
+                if (posY > canv.top && posY < canv.height) {
+
+                    /*if (posX >= matriz.x && posX < matriz.x + matriz.largura) { // Cursor dentro da matriz
+                        if (posY >= matriz.y && posY < matriz.y + matriz.altura) {
+                            console.log("posX: " + posX + " poxY: " + posY);
+
+                            //indiceCursor(posX, quadX, quadLargura, matriz.j);
+                        }
+                    }*/
+                    //console.log(posX / 100);
+                }
+            }
+        }
+
+        window.onmousedown = function () {
+            var canv = canvas.getBoundingClientRect();
+            var posX = event.clientX - canv.left;
+            var posY = event.clientY - canv.top;
+
+            var indice = -1;
+
+            if (posX >= matriz.x && posX < matriz.x + matriz.largura) { // Cursor dentro da matriz
+                if (posY >= matriz.y && posY < matriz.y + matriz.altura) {
+                    indice = indiceCursor(posX, posY);
+                    console.log(indice);
+                    if (indice !== undefined) {
+                        if (matriz.arrQuadradinhos[indice].getFoiClicado() === mouse.naoClicado) {
+                            if (colisao(matriz.arrQuadradinhos[indice].getX(), matriz.arrQuadradinhos[indice].getY(), matriz.arrQuadradinhos[indice].getLargura(), matriz.arrQuadradinhos[indice].getAltura(), posX, posY)) {
+                                if (matriz.arrQuadradinhos[indice].getEstado() === estados.certo) {
+                                    matriz.arrQuadradinhos[indice].setCor("green");
+                                    matriz.qtdQuadradinhosAcertados++;
+                                    score += 10;
+                                }
+                                else {
+                                    matriz.arrQuadradinhos[indice].setCor("red");
+                                }
+                                matriz.arrQuadradinhos[indice].setFoiClicado(mouse.Clicado);
+                                tentativas++;
+                                desenha();
+                                verificaNivel();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function indiceCursor(posX, posY) {
+            var quad = new quadradinho(matriz.arrQuadradinhos[0].getX(), matriz.arrQuadradinhos[0].getY(), matriz.arrQuadradinhos[0].getAltura(), matriz.arrQuadradinhos[0].getLargura());
+            var espacamento = matriz.arrQuadradinhos[1].getX() - (quad.getX() + quad.getLargura());
+
+            if (matriz.linhas < matriz.ultimaLinha) {
+                for (let i = 0; i < matriz.linhas; i++) {
+                    if (posX >= quad.getX() + quad.getLargura() * i + espacamento * i && posX < (quad.getX() + (quad.getLargura() * matriz.colunas) - (quad.getLargura() * (matriz.colunas - (i + 1))) + espacamento * i)) {
+                        for (let j = 0; j < matriz.colunas; j++) {
+                            if (posY >= quad.getY() + quad.getAltura() * j + espacamento * j && posY < (quad.getY() + (quad.getAltura() * matriz.linhas) - (quad.getAltura() * (matriz.linhas - (j + 1))) + espacamento * j)) {
+                                return j * (matriz.linhas - 1) + i + j;
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                for (let i = 0; i < matriz.colunas; i++) {
+                    if (posX >= quad.getX() + quad.getLargura() * i + espacamento * i && posX < (quad.getX() + (quad.getLargura() * matriz.colunas) - (quad.getLargura() * (matriz.colunas - (i + 1))) + espacamento * i)) {
+                        for (let j = 0; j < matriz.linhas; j++) {
+                            if (posY >= quad.getY() + quad.getAltura() * j + espacamento * j && posY < (quad.getY() + (quad.getAltura() * matriz.linhas) - (quad.getAltura() * (matriz.linhas - (j + 1))) + espacamento * j)) {
+                                return j * (matriz.colunas - 1) + i + j;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function verificaNivel() {
+            if (matriz.qtdQuadradinhosAcertados === matriz.qtdQuadradinhosCertos) {
+                global_level++;
+                tentativas = 0;
+                matriz.proximoNivel();
+                rodarJogo();
+            }
+        }
 
         // Função Principal.
         function main() {
@@ -183,8 +395,12 @@
             canvas.width = LARGURA;
             canvas.style.border = "1px solid #000";
 
+
             ctx = canvas.getContext("2d"); // Tudo o que é desenhado no Canvas, por meio de 'ctx', é um elemento 2D
             document.body.appendChild(canvas); // Adiciona o elemento ao corpo HTML
+
+            fundo_canvas = "img/brown_texture.jpg"
+            canvas.style.backgroundImage = "url(" + fundo_canvas + ")";
 
             rodarJogo();
 
@@ -192,7 +408,18 @@
 
         // Rotinas para execução do Jogo.
         function rodarJogo() {
+            
             desenha();
+
+            for (let i = 0; i < matriz.linhas * matriz.colunas; i++) {
+                matriz.insere();
+            }
+
+            matriz.desenha();
+
+            console.log("Elementos: " + matriz.arrQuadradinhos.length);
+            
+            matriz.sorteia();
         }
 
         // Função que pausa a execução do programa por alguns milissegundos.
@@ -204,33 +431,59 @@
             }
         }
 
+        function escreverTexto(texto, x, y, tamanho, cor, fonte, alinhamento) {
+            if (texto === undefined || texto === "") {
+                texto = "Texto";
+            }
+            if (x === undefined || x === "") {
+                x = 0;
+            }
+            if (y === undefined || y === "") {
+                y = 10;
+            }
+            if (tamanho === undefined || tamanho === "") {
+                tamanho = "10px";
+            }
+            if (cor === undefined || cor === "") {
+                cor = "black";
+            }
+            if (fonte === undefined || fonte === "") {
+                fonte = "Arial";
+            }
+            if (alinhamento === undefined || alinhamento === "") {
+                alinhamento = "left";
+            }
+            ctx.font = "30px Arial";
+            ctx.fillStyle = cor;
+            ctx.font = tamanho + " " + fonte;
+            ctx.textAlign = alinhamento;
+            ctx.fillText(texto, x, y);
+        }
+
         // TODO
         function desenha() {
-            fundo_canvas = "img/brown_texture.jpg"
-            canvas.style.backgroundImage = "url(" + fundo_canvas + ")";
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             limiteMatriz.desenha();
             matriz.desenha();
 
-            // TODO
-            for (let i = 0; i < global_level; i++) {
-                matriz.proximoNivel();
+            var textoX = 450;
+            var textoY = 50;
+
+            escreverTexto("Nível:", 60, textoY, "20px");
+            escreverTexto(matriz.nivel + 1, 115, textoY, "20px");
+
+            escreverTexto("Tiles:", textoX, textoY, "20px");
+            escreverTexto(matriz.qtdQuadradinhosCertos, textoX + 50, textoY, "20px");
+            escreverTexto("Tentativas:", textoX + 70, textoY, "20px");
+            if (tentativas < 10) {
+                escreverTexto(tentativas, textoX + 175, textoY, "20px");
             }
-            
-            for (let i = 0; i < 25; i++) {
-                matriz.insere();                
+            else {
+                escreverTexto(tentativas, textoX + 170, textoY, "20px");
             }
-
-
-            //matriz.arrQuadradinhos[0].desenha();
-            ctx.moveTo(limiteMatriz.x + 360, limiteMatriz.y);
-            ctx.lineTo(limiteMatriz.x + 360, limiteMatriz.y + 480);
-            ctx.stroke();
-            ctx.moveTo(limiteMatriz.x, limiteMatriz.y + 240);
-            ctx.lineTo(limiteMatriz.x + 720, limiteMatriz.y + 240);
-            ctx.stroke();
-
-            console.log("Elementos: " + matriz.arrQuadradinhos.length);
+            escreverTexto("Score:", 650, 50, "20px");
+            escreverTexto(score, 720, 50, "20px");
         }
 
         main();
